@@ -1,0 +1,950 @@
+
+<!DOCTYPE html><html lang="es"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster - Verificador de Tareas</title>
+    <!-- Incluye Vue.js desde un CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <!-- Incluye Bootstrap 5 para mejorar el diseño -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Incluye Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Incluir Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="https://lh3.googleusercontent.com/dGySs7ietBmar4O10RfNtRsgjrOjW6wS-E3ijvXX3u8ZoDmFRV9mKPqn2ecoCnhTU0OW_XmF-WrDxN_QlKh7sIZ1etO1bzBs_jFXoCYpfIpxW_g49qQ_A23VSRlgP1i__hg=w1280">
+    <style>
+        :root {
+            --primary: #6c63ff;
+            --secondary: #4a44b5;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --dark: #121212;
+            --light: #f8f9fa;
+            --card-bg: #1e1e1e;
+            --card-border: #333;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin-top: 30px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        .header-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
+        }
+        
+        .task-card {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #2d2d2d;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+            position: relative; /* Necesario para la animación de carga */
+        }
+        
+        .task-card:hover {
+            background-color: #3a3a3a;
+            transform: translateX(5px);
+        }
+        
+        .task-card.completed {
+            border-left-color: var(--success);
+            opacity: 0.8;
+        }
+        
+        .task-card.important {
+            border-left-color: var(--danger);
+        }
+        
+        .completed .task-text {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+        
+        .task-text {
+            font-size: 1.1rem;
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        
+        .task-meta {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 50px;
+            padding: 10px 25px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 99, 255, 0.4);
+        }
+        
+        /* Estilos para el botón de Gemini (Sparkle) */
+        .btn-gemini {
+            background: linear-gradient(135deg, #17a2b8, #17a2b8); /* Azul/Cian */
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 25px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-gemini:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.5); /* Sombra cian */
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #20c997);
+            border: none;
+            border-radius: 50px;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #c82333);
+            border: none;
+            border-radius: 50px;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #e0a800);
+            border: none;
+            border-radius: 50px;
+        }
+        
+        .form-control, .form-select {
+            background-color: #2d2d2d;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 10px;
+            padding: 12px 15px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #2d2d2d;
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
+        }
+        
+        .stats-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        .filter-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .notificacion {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.5s, fadeOut 0.5s 2.5s forwards;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; visibility: hidden; }
+        }
+        
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 14px;
+            background: rgba(15, 32, 39, 0.9);
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #aaa;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .priority-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-left: 10px;
+        }
+        
+        .priority-high {
+            background-color: var(--danger);
+        }
+        
+        .priority-medium {
+            background-color: var(--warning);
+            color: #000;
+        }
+        
+        .priority-low {
+            background-color: var(--info);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+        }
+        
+        .search-box input {
+            padding-left: 45px;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .task-date {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+        
+        .progress-bar-custom {
+            height: 8px;
+            border-radius: 10px;
+            background-color: #444;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        /* Estilos para el detalle de la tarea */
+        .task-detail {
+            background-color: #3a3a3a;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            white-space: pre-wrap; /* Respeta los saltos de línea del LLM */
+            color: #d1d5db;
+        }
+        
+        .citation {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 5px;
+            border-top: 1px dashed #4b5563;
+            padding-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 15px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn-icon {
+                width: 100%;
+                border-radius: 10px;
+            }
+            
+            .task-card {
+                padding: 10px;
+            }
+        }
+    </style>
+<style>
+
+</style>
+</head>
+<body>
+    <div id="app" class="container">
+        <!-- Notificación -->
+        <div v-if="mostrarNotificacion" :class="['notificacion', notificacionTipo]">
+            <i :class="notificacionIcono" class="me-2"></i>
+            {{ mensajeNotificacion }}
+        </div>
+
+        <!-- Modal de Carga global -->
+        <div v-if="isLoading" class="loading-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="text-center">
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-3 text-info">✨ Procesando solicitud con Gemini...</p>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="card mb-4">
+            <div class="header-card text-center">
+                <h1 class="mb-0"><i class="fas fa-tasks me-2"></i>TaskMaster</h1>
+                <p class="mb-0">Tu verificador de tareas personal potenciado por IA</p>
+            </div>
+            <div class="card-body">
+                <!-- Contador de tareas -->
+                <div class="stats-container">
+                    <div class="row text-center">
+                        <div class="col-md-3 stat-item">
+                            <div class="stat-value">{{ tareas.length }}</div>
+                            <div class="stat-label">Total Tareas</div>
+                        </div>
+                        <div class="col-md-3 stat-item">
+                            <div class="stat-value text-success">{{ tareasCompletadas }}</div>
+                            <div class="stat-label">Completadas</div>
+                        </div>
+                        <div class="col-md-3 stat-item">
+                            <div class="stat-value text-warning">{{ tareasPendientes }}</div>
+                            <div class="stat-label">Pendientes</div>
+                        </div>
+                        <div class="col-md-3 stat-item">
+                            <div class="stat-value text-info">{{ tareasImportantes }}</div>
+                            <div class="stat-label">Importantes</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar-custom mt-3">
+                        <div class="progress-fill" :style="{ width: porcentajeCompletadas + '%' }"></div>
+                    </div>
+                    <div class="text-center mt-2">
+                        <small>Progreso: {{ porcentajeCompletadas.toFixed(0) }}%</small>
+                    </div>
+                </div>
+
+                <!-- Filtros y búsqueda -->
+                <div class="filter-container">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input v-model="busqueda" type="text" class="form-control" placeholder="Buscar tareas...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select v-model="materiaSeleccionada" class="form-select">
+                                <option value="Todas">Todas las materias</option>
+                                <option value="Español">Español</option>
+                                <option value="Inglés">Inglés</option>
+                                <option value="Cálculo">Cálculo</option>
+                                <option value="L.Critica">L.Critica</option>
+                                <option value="Religión">Religión</option>
+                                <option value="Química">Química</option>
+                                <option value="Técnica con Alberto">Técnica con Alberto</option>
+                                <option value="Técnica con Jair">Técnica con Edgar</option>
+                                <option value="Técnica con Instructor">Técnica con Instructor</option>
+                                <option value="Etica">Etica</option>
+                                <option value="Informática">Informática</option>
+                                <option value="Estadistica">Estadistica</option>
+                                <option value="Física">Física</option>
+                                <option value="Ed.Fisica">Ed.Fisica</option>
+                                <option value="Ciencias Políticas">Ciencias Políticas</option>
+                                <option value="Artes">Artes</option>
+                                <option value="Filosofía">Filosofía</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select v-model="estadoSeleccionado" class="form-select">
+                                <option value="Todas">Todas las tareas</option>
+                                <option value="Pendientes">Solo pendientes</option>
+                                <option value="Completadas">Solo completadas</option>
+                                <option value="Importantes">Solo importantes</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agregar tarea -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <input v-model="nuevaTarea" @keyup.enter="agregarTarea" type="text" class="form-control" placeholder="Agregar una nueva tarea...">
+                    </div>
+                    <div class="col-md-3">
+                        <select v-model="materiaNueva" class="form-select">
+                            <option value="Español">Español</option>
+                            <option value="Inglés">Inglés</option>
+                            <option value="Cálculo">Cálculo</option>
+                            <option value="L.Critica">L.Critica</option>
+                            <option value="Religión">Religión</option>
+                            <option value="Química">Química</option>
+                            <option value="Técnica con Alberto">Técnica con Alberto</option>
+                            <option value="Técnica con Jair">Técnica con Jair</option>
+                            <option value="Técnica con Instructor">Técnica con Instructor</option>
+                            <option value="Etica">Etica</option>
+                            <option value="Informática">Informática</option>
+                            <option value="Estadistica">Estadistica</option>
+                            <option value="Física">Física</option>
+                            <option value="Ed.Fisica">Ed.Fisica</option>
+                            <option value="Ciencias Políticas">Ciencias Políticas</option>
+                            <option value="Artes">Artes</option>
+                            <option value="Filosofía">Filosofía</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select v-model="prioridadNueva" class="form-select">
+                            <option value="Baja">Prioridad Baja</option>
+                            <option value="Media">Prioridad Media</option>
+                            <option value="Alta">Prioridad Alta</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button @click="corregirTexto" class="btn btn-gemini me-md-2" :disabled="isLoading || nuevaTarea.trim() === ''">
+                        <i class="fas fa-spell-check me-2"></i>✨ Corregir Texto
+                    </button>
+                    <button @click="agregarTarea" class="btn btn-primary" :disabled="isLoading">
+                        <i class="fas fa-plus me-2"></i>Agregar Tarea
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de tareas -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-list-check me-2"></i>Lista de Tareas</h5>
+                
+                <div v-if="tareasFiltradas.length === 0" class="empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h4>No hay tareas para mostrar</h4>
+                    <p>Agrega una nueva tarea usando el formulario de arriba</p>
+                </div>
+                
+                <div v-else="">
+                    <div v-for="(tarea, index) in tareasFiltradas" :key="index" :class="['task-card', { 'completed': tarea.hecha, 'important': tarea.prioridad === 'Alta' }]">
+                        
+                        <!-- Capa de Carga de Detalle -->
+                        <div v-if="tarea.isGeneratingDetail" class="loading-overlay">
+                            <div class="spinner-border text-info" role="status"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="task-text" @click="toggleTarea(index)">
+                                {{ tarea.texto }}
+                                <span v-if="tarea.prioridad === 'Alta'" class="priority-badge priority-high">Alta</span>
+                                <span v-else-if="tarea.prioridad === 'Media'" class="priority-badge priority-medium">Media</span>
+                                <span v-else="" class="priority-badge priority-low">Baja</span>
+                            </div>
+                            <div class="action-buttons">
+                                <button @click="explicarConcepto(index)" :disabled="tarea.isGeneratingDetail" class="btn btn-gemini btn-icon" title="Explicar concepto clave de la tarea (IA + Web)">
+                                    <i class="fas fa-brain"></i>
+                                </button>
+                                <button @click="toggleImportante(index)" :class="['btn', 'btn-icon', tarea.importante ? 'btn-warning' : 'btn-outline-warning']" title="Marcar como Importante">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button @click="editarTarea(index)" class="btn btn-outline-primary btn-icon" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button @click="borrarTarea(index)" class="btn btn-outline-danger btn-icon" title="Borrar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="task-meta">
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-book me-1"></i>{{ tarea.materia }}</span>
+                                <span class="task-date"><i class="fas fa-calendar me-1"></i>{{ tarea.fecha }}</span>
+                            </div>
+                            <!-- Detalle generado por Gemini -->
+                            <div v-if="tarea.detalle" class="task-detail mt-2">
+                                <i class="fas fa-lightbulb me-2 text-warning"></i>
+                                <strong>Explicación Rápida:</strong> {{ tarea.detalle }}
+                                <div v-if="tarea.sources &amp;&amp; tarea.sources.length" class="citation">
+                                    Fuentes:
+                                    <span v-for="(source, sIndex) in tarea.sources" :key="sIndex">
+                                        <a :href="source.uri" target="_blank" class="text-info">{{ source.title }}</a>{{ sIndex &lt; tarea.sources.length - 1 ? ', ' : '' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones adicionales -->
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <div class="task-actions justify-content-center">
+                    <button @click="borrarTodasLasTareas" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Borrar Todas
+                    </button>
+                    <button @click="exportarTareas" class="btn btn-success">
+                        <i class="fas fa-download me-2"></i>Exportar
+                    </button>
+                    <label for="file-input" class="btn btn-outline-info">
+                        <i class="fas fa-upload me-2"></i>Importar
+                    </label>
+                    <input type="file" id="file-input" @change="importarTareas" class="d-none">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Desarrollado por: Andrés Boyacá <i class="fas fa-heart ms-2" style="color: #ff6b6b;"></i> | Potenciado con Gemini.
+    </footer>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                nuevaTarea: '',
+                materiaNueva: 'Español',
+                prioridadNueva: 'Media',
+                materiaSeleccionada: 'Todas',
+                estadoSeleccionado: 'Todas',
+                busqueda: '',
+                tareas: [],
+                mostrarNotificacion: false,
+                mensajeNotificacion: '',
+                notificacionTipo: 'bg-success',
+                notificacionIcono: 'fas fa-check-circle',
+                isLoading: false, // Estado de carga global
+            },
+            methods: {
+                // Función de utilidad para la API de Gemini (con Backoff)
+                async fetchGemini(payload, useSearch = false) {
+                    // API Key insertada
+                    const apiKey = "AIzaSyCBuLDXJDZ4EgNvugsyx64JyCDRR0TG9-c"; 
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    
+                    if (useSearch) {
+                        payload.tools = [{ "google_search": {} }];
+                    } else {
+                        delete payload.tools;
+                    }
+
+                    for (let i = 0; i < 5; i++) { // Intenta hasta 5 veces
+                        try {
+                            const response = await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+
+                            if (!response.ok) {
+                                // Captura el error 401 y lo maneja, mostrando una notificación clara.
+                                if (response.status === 401) {
+                                    throw new Error("API Key inválida. Error 401 de autorización.");
+                                }
+                                throw new Error(`API call failed with status ${response.status}`);
+                            }
+
+                            const result = await response.json();
+                            const candidate = result.candidates?.[0];
+                            
+                            if (candidate && candidate.content?.parts?.[0]?.text) {
+                                const text = candidate.content.parts[0].text;
+                                let sources = [];
+
+                                if (useSearch && candidate.groundingMetadata && candidate.groundingMetadata.groundingAttributions) {
+                                    sources = candidate.groundingMetadata.groundingAttributions
+                                        .map(attribution => ({
+                                            uri: attribution.web?.uri,
+                                            title: attribution.web?.title,
+                                        }))
+                                        .filter(source => source.uri && source.title);
+                                }
+                                return { text, sources };
+                            } else {
+                                throw new Error("Received an empty response from Gemini.");
+                            }
+
+                        } catch (error) {
+                            console.error(`Attempt ${i + 1} failed:`, error);
+                            
+                            // Si es un error de autorización, no reintentes.
+                            if (error.message.includes("Error 401 de autorización")) {
+                                this.mostrarNotificacionFunc("Error de autenticación: La clave API es inválida.", 'danger', 'fas fa-shield-alt');
+                                throw error; 
+                            }
+
+                            if (i === 4) throw new Error("Gemini API failed after multiple retries.");
+                            const delay = Math.pow(2, i) * 1000;
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                        }
+                    }
+                },
+
+                // --- NUEVAS Funciones IA ---
+
+                async corregirTexto() {
+                    const textoOriginal = this.nuevaTarea.trim();
+                    if (!textoOriginal) {
+                        this.mostrarNotificacionFunc('El campo de tarea está vacío para corregir.', 'danger', 'fas fa-exclamation-circle');
+                        return;
+                    }
+                    
+                    this.isLoading = true;
+                    this.mostrarNotificacionFunc('Corrigiendo texto con IA...', 'info', 'fas fa-spell-check');
+
+                    const systemPrompt = "Eres un corrector de estilo y gramática en español. Revisa la frase del usuario por errores gramaticales, ortográficos o de sintaxis, y devuelve únicamente la frase corregida. No añadas explicaciones ni puntuación extra (como comillas). Si la frase es perfecta, devuélvela tal cual.";
+                    const userQuery = `Revisar y corregir esta frase: "${textoOriginal}"`;
+                    
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                    };
+
+                    try {
+                        const { text: correctedText } = await this.fetchGemini(payload, false);
+                        
+                        if (correctedText && correctedText.trim().toLowerCase() !== textoOriginal.toLowerCase()) {
+                            this.nuevaTarea = correctedText.trim();
+                            this.mostrarNotificacionFunc('Texto corregido por Gemini.', 'success', 'fas fa-check');
+                        } else {
+                            this.mostrarNotificacionFunc('No se encontraron correcciones necesarias.', 'warning', 'fas fa-lightbulb');
+                        }
+                    } catch (error) {
+                        console.error("Error al corregir texto:", error);
+                        if (!error.message.includes("Error 401 de autorización")) {
+                            this.mostrarNotificacionFunc('Error al corregir texto con Gemini.', 'danger', 'fas fa-exclamation-triangle');
+                        }
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                async explicarConcepto(index) {
+                    const tarea = this.tareas[index];
+                    
+                    // Reemplazo de alert()
+                    if (tarea.detalle && !confirm('¿Ya existe una explicación. Deseas generar una nueva?')) {
+                        return;
+                    }
+                    
+                    Vue.set(tarea, 'isGeneratingDetail', true);
+                    Vue.set(tarea, 'detalle', 'Buscando y resumiendo...');
+                    Vue.set(tarea, 'sources', []);
+
+                    const systemPrompt = "Eres un asistente educativo. Analiza la tarea dada y la materia, identifica el concepto clave (ej: 'Leyes de Kepler', 'El Siglo de Oro', 'función cuadrática') y proporciona una explicación concisa y fundamental de ese concepto. Responde con un resumen de 3-4 líneas. Incluye únicamente la explicación y las citas (si las hay).";
+                    const userQuery = `Explica el concepto clave de la siguiente tarea: "${tarea.texto}" (Materia: ${tarea.materia})`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                    };
+
+                    try {
+                        const { text, sources } = await this.fetchGemini(payload, true); // Usar Google Search grounding
+                        
+                        Vue.set(tarea, 'detalle', text);
+                        Vue.set(tarea, 'sources', sources);
+                        this.mostrarNotificacionFunc('Concepto explicado con fuentes web.', 'info', 'fas fa-brain');
+                        this.guardarTareas();
+                    } catch (error) {
+                        console.error("Error al explicar concepto:", error);
+                        Vue.set(tarea, 'detalle', 'Error al generar la explicación con Gemini.');
+                        Vue.set(tarea, 'sources', []);
+                        if (!error.message.includes("Error 401 de autorización")) {
+                            this.mostrarNotificacionFunc('Error al buscar la explicación.', 'danger', 'fas fa-exclamation-triangle');
+                        }
+                    } finally {
+                        Vue.set(tarea, 'isGeneratingDetail', false);
+                    }
+                },
+
+                // --- Funciones Base ---
+                agregarTarea: function() {
+                    if (this.nuevaTarea.trim() !== '') {
+                        const nuevaTarea = {
+                            materia: this.materiaNueva,
+                            texto: this.nuevaTarea,
+                            hecha: false,
+                            importante: false,
+                            prioridad: this.prioridadNueva,
+                            fecha: new Date().toLocaleString(),
+                            detalle: '', 
+                            isGeneratingDetail: false, 
+                            sources: [] // Nueva propiedad para las fuentes
+                        };
+                        this.tareas.unshift(nuevaTarea);
+                        this.nuevaTarea = '';
+                        this.mostrarNotificacionFunc('Tarea agregada correctamente.', 'success', 'fas fa-check-circle');
+                        this.guardarTareas();
+                    } else {
+                        this.mostrarNotificacionFunc('Por favor, ingresa una tarea.', 'danger', 'fas fa-exclamation-circle');
+                    }
+                },
+                borrarTarea: function(index) {
+                    // Reemplazo de alert()
+                    if (confirm('¿Estás seguro de eliminar esta tarea?')) {
+                        this.tareas.splice(index, 1);
+                        this.mostrarNotificacionFunc('Tarea eliminada correctamente.', 'success', 'fas fa-trash-alt');
+                        this.guardarTareas();
+                    }
+                },
+                toggleTarea: function(index) {
+                    this.tareas[index].hecha = !this.tareas[index].hecha;
+                    const estado = this.tareas[index].hecha ? 'completada' : 'pendiente';
+                    this.mostrarNotificacionFunc(`Tarea marcada como ${estado}.`, 'info', 'fas fa-info-circle');
+                    this.guardarTareas();
+                },
+                toggleImportante: function(index) {
+                    this.tareas[index].importante = !this.tareas[index].importante;
+                    const estado = this.tareas[index].importante ? 'importante' : 'no importante';
+                    this.mostrarNotificacionFunc(`Tarea marcada como ${estado}.`, 'warning', 'fas fa-star');
+                    this.guardarTareas();
+                },
+                editarTarea: function(index) {
+                    // Reemplazo de alert()
+                    const nuevoTexto = prompt('Editar tarea:', this.tareas[index].texto);
+                    if (nuevoTexto !== null && nuevoTexto.trim() !== '') {
+                        this.tareas[index].texto = nuevoTexto;
+                        Vue.set(this.tareas[index], 'detalle', ''); 
+                        Vue.set(this.tareas[index], 'isGeneratingDetail', false);
+                        Vue.set(this.tareas[index], 'sources', []);
+                        this.mostrarNotificacionFunc('Tarea editada correctamente. El detalle generado fue borrado.', 'success', 'fas fa-edit');
+                        this.guardarTareas();
+                    } else if (nuevoTexto !== null) {
+                        this.mostrarNotificacionFunc('La tarea no puede estar vacía.', 'danger', 'fas fa-exclamation-circle');
+                    }
+                },
+                borrarTodasLasTareas: function() {
+                    // Reemplazo de alert()
+                    if (confirm('¿Estás seguro de borrar todas las tareas? Esta acción no se puede deshacer.')) {
+                        this.tareas = [];
+                        this.mostrarNotificacionFunc('Todas las tareas han sido eliminadas.', 'success', 'fas fa-trash-alt');
+                        this.guardarTareas();
+                    }
+                },
+                exportarTareas: function() {
+                    const dataStr = JSON.stringify(this.tareas.map(t => {
+                        // Limpiar propiedades temporales antes de exportar
+                        const { isGeneratingDetail, sources, ...task } = t;
+                        return task;
+                    }), null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                    const exportFileDefaultName = 'tareas_taskmaster.json';
+                    const linkElement = document.createElement('a');
+                    linkElement.setAttribute('href', dataUri);
+                    linkElement.setAttribute('download', exportFileDefaultName);
+                    linkElement.click();
+                    this.mostrarNotificacionFunc('Tareas exportadas correctamente.', 'success', 'fas fa-file-export');
+                },
+                importarTareas: function(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const importedTasks = JSON.parse(e.target.result);
+                                if (Array.isArray(importedTasks)) {
+                                    // Asegurarse de que las tareas importadas tengan las nuevas propiedades
+                                    this.tareas = importedTasks.map(t => ({
+                                        ...t,
+                                        detalle: t.detalle || '', 
+                                        isGeneratingDetail: false,
+                                        sources: t.sources || []
+                                    }));
+                                    this.mostrarNotificacionFunc('Tareas importadas correctamente.', 'success', 'fas fa-file-import');
+                                    this.guardarTareas();
+                                } else {
+                                    this.mostrarNotificacionFunc('El archivo no contiene una lista válida de tareas.', 'danger', 'fas fa-exclamation-triangle');
+                                }
+                            } catch (error) {
+                                this.mostrarNotificacionFunc('Error al importar el archivo.', 'danger', 'fas fa-exclamation-triangle');
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                    event.target.value = '';
+                },
+                guardarTareas: function() {
+                    // Solo guardar las propiedades persistentes
+                    const tasksToSave = this.tareas.map(t => {
+                        const { isGeneratingDetail, sources, ...task } = t;
+                        return task;
+                    });
+                    localStorage.setItem('tareas_taskmaster', JSON.stringify(tasksToSave));
+                },
+                mostrarNotificacionFunc: function(mensaje, tipo, icono) {
+                    this.mensajeNotificacion = mensaje;
+                    this.notificacionTipo = 'bg-' + tipo;
+                    this.notificacionIcono = icono;
+                    this.mostrarNotificacion = true;
+                    setTimeout(() => {
+                        this.mostrarNotificacion = false;
+                    }, 3000);
+                }
+            },
+            computed: {
+                tareasFiltradas: function() {
+                    let filtered = this.tareas;
+                    
+                    // Filtrar por materia
+                    if (this.materiaSeleccionada !== 'Todas') {
+                        filtered = filtered.filter(tarea => tarea.materia === this.materiaSeleccionada);
+                    }
+                    
+                    // Filtrar por estado
+                    if (this.estadoSeleccionado === 'Pendientes') {
+                        filtered = filtered.filter(tarea => !tarea.hecha);
+                    } else if (this.estadoSeleccionado === 'Completadas') {
+                        filtered = filtered.filter(tarea => tarea.hecha);
+                    } else if (this.estadoSeleccionado === 'Importantes') {
+                        filtered = filtered.filter(tarea => tarea.importante);
+                    }
+                    
+                    // Filtrar por búsqueda
+                    if (this.busqueda) {
+                        const searchTerm = this.busqueda.toLowerCase();
+                        filtered = filtered.filter(tarea => 
+                            tarea.texto.toLowerCase().includes(searchTerm) || 
+                            tarea.materia.toLowerCase().includes(searchTerm) ||
+                            (tarea.detalle && tarea.detalle.toLowerCase().includes(searchTerm))
+                        );
+                    }
+                    
+                    return filtered;
+                },
+                tareasCompletadas: function() {
+                    return this.tareas.filter(tarea => tarea.hecha).length;
+                },
+                tareasPendientes: function() {
+                    return this.tareas.filter(tarea => !tarea.hecha).length;
+                },
+                tareasImportantes: function() {
+                    return this.tareas.filter(tarea => tarea.importante).length;
+                },
+                porcentajeCompletadas: function() {
+                    if (this.tareas.length === 0) return 0;
+                    return (this.tareasCompletadas / this.tareas.length) * 100;
+                }
+            },
+            mounted: function() {
+                // Cargar tareas desde el almacenamiento local al cargar la página
+                const tareasGuardadas = JSON.parse(localStorage.getItem('tareas_taskmaster')) || [];
+                // Asegurar que las propiedades de Gemini y estado de carga estén presentes
+                this.tareas = tareasGuardadas.map(t => ({
+                    ...t,
+                    detalle: t.detalle || '', 
+                    isGeneratingDetail: false,
+                    sources: t.sources || []
+                }));
+            }
+        });
+    </script>
+
+
+</body></html>
